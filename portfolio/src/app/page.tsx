@@ -9,11 +9,6 @@ export default function Home() {
         <title>cres</title>
         <meta name="description" content="terminal/portfolio@cres" />
         <link rel="icon" href="/favicon.ico" />
-        <link 
-          href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" 
-          rel="stylesheet" 
-        />
-
       </Head>
 
       <main className={styles.main}>
