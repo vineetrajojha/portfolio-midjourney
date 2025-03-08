@@ -1,0 +1,107 @@
+.terminal {
+    width: 100%;
+    max-width: 800px;
+    height: 500px;
+    background-color: #2b2b2b;
+    border-radius: 6px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    font-family: 'Fira Code', 'SF Mono', 'Monaco', 'Menlo', 'Consolas', monospace;
+    margin: 40px auto;
+  }
+  
+  .terminalHeader {
+    height: 28px;
+    background-color: #1c1c1c;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+  }
+  
+  .terminalButtons {
+    display: flex;
+    gap: 6px;
+  }
+  
+  .terminalButton {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  
+  .terminalTitle {
+    flex-grow: 1;
+    text-align: center;
+    color: #cccccc;
+    font-size: 12px;
+  }
+  
+  .terminalBody {
+    flex-grow: 1;
+    padding: 16px;
+    overflow-y: auto;
+    color: #f0f0f0;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+  
+  .terminalPrompt {
+    display: flex;
+    align-items: center;
+    margin-top: 4px;
+  }
+  
+  .terminalPath {
+    color: #7eff00;
+    margin-right: 8px;
+  }
+  
+  .terminalInput {
+    background: transparent;
+    border: none;
+    color: #f0f0f0;
+    font-family: inherit;
+    font-size: inherit;
+    outline: none;
+    flex-grow: 1;
+    caret-color: #ffffff;
+  }
+  
+  .terminalCommand {
+    color: #cccccc;
+  }
+  
+  .terminalOutput {
+    margin-top: 8px;
+    margin-bottom: 16px;
+    white-space: pre-wrap;
+  }
+  
+  .terminalOutputLine:not(:last-child) {
+    margin-bottom: 4px;
+  }
+  
+  /* Media queries for responsiveness */
+  @media (max-width: 768px) {
+    .terminal {
+      height: 400px;
+      margin: 20px auto;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .terminal {
+      height: 350px;
+      margin: 10px auto;
+    }
+    
+    .terminalBody {
+      padding: 12px;
+      font-size: 13px;
+    }
+  }
+  
