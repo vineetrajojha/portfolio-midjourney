@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import styles from './Terminal.module.css';
 
 const TerminalPrompt = ({ path, value, onChange, onSubmit, inputRef }) => {

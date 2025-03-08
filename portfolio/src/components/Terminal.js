@@ -10,7 +10,7 @@ const Terminal = () => {
     { type: 'output', text: 'Type "help" to see available commands.' }
   ]);
   const [inputValue, setInputValue] = useState('');
-  const [currentPath, setCurrentPath] = useState('~');
+  const [currentPath] = useState('~');
   const inputRef = useRef(null);
   const terminalRef = useRef(null);
 
