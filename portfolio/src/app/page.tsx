@@ -7,7 +7,7 @@ export default function Home() {
     <div className={styles.container}>
       <Head>
         <title>cres</title>
-        <meta name="description" content="cres's terminal-style portfolio website" />
+        <meta name="description" content="terminal/portfolio@cres" />
         <link rel="icon" href="/favicon.ico" />
         <link 
           href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=swap" 

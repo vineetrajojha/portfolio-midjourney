@@ -6,7 +6,7 @@ import styles from './Terminal.module.css';
 
 const Terminal = () => {
   const [history, setHistory] = useState([
-    { type: 'output', text: 'hi this is vineet and i build stuffs, for more info type },
+    { type: 'output', text: 'hi this is vineet and i build stuffs' },
     { type: 'output', text: 'Type "help" to see available commands.' }
   ]);
   const [inputValue, setInputValue] = useState('');
