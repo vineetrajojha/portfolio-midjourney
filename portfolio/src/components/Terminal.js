@@ -10,64 +10,45 @@ const Terminal = () => {
     { type: 'output', text: 'Type "help" to see available commands.' }
   ]);
   const [inputValue, setInputValue] = useState('');
+  const [commandHistory, setCommandHistory] = useState([]);
+  const [historyIndex, setHistoryIndex] = useState(-1);
   const [currentPath] = useState('~');
   const inputRef = useRef(null);
   const terminalRef = useRef(null);
 
   const handleCommand = (command) => {
     setHistory(prev => [...prev, { type: 'command', text: `${currentPath}$ ${command}` }]);
+    setCommandHistory(prev => [...prev, command]);
+    setHistoryIndex(-1);
 
-    // Process command
     const cmd = command.trim().toLowerCase();
     
     if (cmd === '') {
-      // Empty command, just add a new line
       return;
     } else if (cmd === 'help') {
       setHistory(prev => [...prev, { 
         type: 'output', 
-        text: `Available commands:
-- about
-- projects
-- social
-- clear
-` 
+        text: `Available commands:\n- portfolio themes\n- about\n- projects\n- social\n- clear\n` 
       }]);
     } else if (cmd === 'about') {
       setHistory(prev => [...prev, { 
         type: 'output', 
-        text: `Hi, I'm [Your Name]!
-        
-I'm a [Your Role/Title] specializing in [Your Skills].
-        
-With [X] years of experience in web development, I'm passionate about creating intuitive and efficient digital experiences.` 
+        text: `Hi, I'm Vineet!\n\nI'm an AI Engineer specializing in web and AI solutions.\n\nWith years of experience in development, I'm passionate about creating intuitive and efficient digital experiences.` 
       }]);
     } else if (cmd === 'projects') {
       setHistory(prev => [...prev, { 
         type: 'output', 
-        text: `My Projects:
-        
-1. [Project Name] - [Brief Description]
-   Tech: [Technologies Used]
-   Link: github.com/yourusername/repo
-        
-2. [Project Name] - [Brief Description]
-   Tech: [Technologies Used]
-   Link: github.com/yourusername/repo
-        
-3. [Project Name] - [Brief Description]
-   Tech: [Technologies Used]
-   Link: github.com/yourusername/repo` 
+        text: `My Projects:\n\n1. WebEase - A platform for students to collaborate and find paid projects.\n   Tech: MERN Stack\n   Link: github.com/vineet/project1\n\n2. AI-Powered Quality Control - Automating defect detection in manufacturing.\n   Tech: Python, TensorFlow\n   Link: github.com/vineet/project2` 
       }]);
     } else if (cmd === 'social') {
       setHistory(prev => [...prev, { 
         type: 'output', 
-        text: `Connect with me:
-        
-- GitHub: github.com/yourusername
-- LinkedIn: linkedin.com/in/yourusername
-- Twitter: twitter.com/yourusername
-- Email: your.email@example.com` 
+        text: `Connect with me:\n\n- GitHub: github.com/vineet\n- LinkedIn: linkedin.com/in/vineet\n- Twitter: twitter.com/vineet\n- Email: vineet@example.com` 
+      }]);
+    } else if (cmd === 'portfolio themes') {
+      setHistory(prev => [...prev, { 
+        type: 'output', 
+        text: `Available themes: minecraft` 
       }]);
     } else if (cmd === 'clear') {
       setHistory([]);
@@ -78,32 +59,46 @@ With [X] years of experience in web development, I'm passionate about creating i
       }]);
     }
     
-    // Clear input
     setInputValue('');
   };
 
-  const focusTerminal = () => {
-    if (inputRef.current) {
-      inputRef.current.focus();
+  const handleKeyDown = (e) => {
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      if (historyIndex < commandHistory.length - 1) {
+        const newIndex = historyIndex + 1;
+        setHistoryIndex(newIndex);
+        setInputValue(commandHistory[commandHistory.length - 1 - newIndex]);
+      }
+    } else if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      if (historyIndex > 0) {
+        const newIndex = historyIndex - 1;
+        setHistoryIndex(newIndex);
+        setInputValue(commandHistory[commandHistory.length - 1 - newIndex]);
+      } else {
+        setHistoryIndex(-1);
+        setInputValue('');
+      }
     }
   };
 
-  // Auto-scroll to bottom when history changes
   useEffect(() => {
     if (terminalRef.current) {
       terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
     }
   }, [history]);
 
-  // Focus input when component mounts or when terminal is clicked
   useEffect(() => {
-    focusTerminal();
+    if (inputRef.current) {
+      inputRef.current.focus();
+    }
   }, []);
 
   return (
     <div 
       className={styles.terminal} 
-      onClick={focusTerminal}
+      onClick={() => inputRef.current.focus()}
       ref={terminalRef}
     >
       <div className={styles.terminalHeader}>
@@ -112,11 +107,10 @@ With [X] years of experience in web development, I'm passionate about creating i
           <div className={styles.terminalButton} style={{ backgroundColor: '#FFBD2E' }}></div>
           <div className={styles.terminalButton} style={{ backgroundColor: '#27C93F' }}></div>
         </div>
-        <div className={styles.terminalTitle}>terminal/portfolio@cres</div>
+        <div className={styles.terminalTitle}>terminal/portfolio@vineet</div>
       </div>
       
       <div className={styles.terminalBody}>
-        {/* Previous commands and outputs */}
         {history.map((item, i) => (
           <div key={i}>
             {item.type === 'command' 
@@ -126,12 +120,12 @@ With [X] years of experience in web development, I'm passionate about creating i
           </div>
         ))}
         
-        {/* Current input */}
         <TerminalPrompt 
           path={currentPath}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onSubmit={() => handleCommand(inputValue)}
+          onKeyDown={handleKeyDown}
           inputRef={inputRef}
         />
       </div>
