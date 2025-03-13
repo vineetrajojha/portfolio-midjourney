@@ -3,55 +3,287 @@ import { useState, useEffect, useRef } from 'react';
 import TerminalPrompt from './TerminalPrompt';
 import TerminalOutput from './TerminalOutput';
 import styles from './Terminal.module.css';
+import { getSystemInfo } from '../utils/systemInfo';
 
 const Terminal = () => {
   const [history, setHistory] = useState([
-    { type: 'output', text: 'hi this is vineet and i build stuffs' },
-    { type: 'output', text: 'Type "help" to see available commands.' }
+    { type: 'output', text: 'Welcome to my interactive portfolio!' },
+    { type: 'output', text: 'Please enter your name to continue:' }
   ]);
   const [inputValue, setInputValue] = useState('');
   const [commandHistory, setCommandHistory] = useState([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
-  const [currentPath] = useState('~');
+  const [currentPath, setCurrentPath] = useState(['~']);
+  const [isInitializing, setIsInitializing] = useState(true);
   const inputRef = useRef(null);
   const terminalRef = useRef(null);
 
+  // Terminal environment info
+  const [terminalEnv, setTerminalEnv] = useState({
+    user: '',
+    machine: '',
+    environment: '(base)',
+  });
+
+  // Add admin user constant and password
+  const ADMIN_USER = 'vineetcres';
+  const ADMIN_PASSWORD = 'Roshni/22@';
+
+  useEffect(() => {
+    const systemInfo = getSystemInfo();
+    if (systemInfo.username) {
+      setTerminalEnv(prev => ({
+        ...prev,
+        user: systemInfo.username,
+        machine: `${systemInfo.deviceName}`,
+      }));
+      setIsInitializing(false);
+    }
+  }, []);
+
+  // File system structure
+  const fileSystem = {
+    '~': {
+      type: 'dir',
+      contents: {
+        'about': { type: 'file', content: 'Hi, I\'m Vineet!\n\nI\'m an AI Engineer specializing in web and AI solutions.\n\nWith years of experience in development, I\'m passionate about creating intuitive and efficient digital experiences.' },
+        'projects': { type: 'dir', contents: {
+          'web-ease': { type: 'file', content: 'WebEase - A platform for students to collaborate and find paid projects.\nTech: MERN Stack\nLink: https://github.com/vineet/project1' },
+          'ai-quality': { type: 'file', content: 'AI-Powered Quality Control - Automating defect detection in manufacturing.\nTech: Python, TensorFlow\nLink: https://github.com/vineet/project2' }
+        }},
+        'social': { type: 'file', content: 'Connect with me:\n\n- GitHub: https://github.com/vineet\n- LinkedIn: https://linkedin.com/in/vineet\n- Twitter: https://twitter.com/vineet\n- Email: vineet@example.com' },
+        'themes': { type: 'dir', contents: {
+          'minecraft': { type: 'file', content: 'Minecraft theme for portfolio' }
+        }},
+        'messages': { type: 'dir', contents: {} }
+      }
+    }
+  };
+
+  // Load saved messages from localStorage
+  useEffect(() => {
+    const savedMessages = localStorage.getItem('terminal_messages');
+    if (savedMessages) {
+      fileSystem['~'].contents.messages.contents = JSON.parse(savedMessages);
+    }
+  }, []);
+
+  const getCurrentDir = () => {
+    let current = fileSystem;
+    for (const dir of currentPath) {
+      if (dir === '~') {
+        current = fileSystem['~'];
+      } else {
+        current = current.contents[dir];
+      }
+    }
+    return current;
+  };
+
   const handleCommand = (command) => {
-    setHistory(prev => [...prev, { type: 'command', text: `${currentPath}$ ${command}` }]);
+    if (isInitializing) {
+      // Handle the username input
+      const username = command.trim();
+      if (username) {
+        if (username.toLowerCase() === ADMIN_USER.toLowerCase()) {
+          setHistory(prev => [
+            ...prev,
+            { type: 'command', text: username },
+            { type: 'output', text: 'This username requires authentication. Please enter the password:' }
+          ]);
+          setInputValue('');
+          return;
+        }
+        
+        localStorage.setItem('terminal_username', username);
+        const systemInfo = getSystemInfo();
+        setTerminalEnv(prev => ({
+          ...prev,
+          user: username,
+          machine: `${systemInfo.deviceName}`,
+        }));
+        setIsInitializing(false);
+        setHistory(prev => [
+          ...prev,
+          { type: 'command', text: username },
+          { type: 'output', text: `Welcome, ${username}! Type "help" to see available commands.` }
+        ]);
+      }
+      setInputValue('');
+      return;
+    }
+
+    // Check if we're waiting for admin password during initialization
+    if (history[history.length - 1]?.text === 'This username requires authentication. Please enter the password:') {
+      const password = command.trim();
+      if (password === ADMIN_PASSWORD) {
+        localStorage.setItem('terminal_username', ADMIN_USER);
+        const systemInfo = getSystemInfo();
+        setTerminalEnv(prev => ({
+          ...prev,
+          user: ADMIN_USER,
+          machine: `${systemInfo.deviceName}`,
+        }));
+        setIsInitializing(false);
+        setHistory(prev => [
+          ...prev,
+          { type: 'command', text: '********' }, // Mask the password in history
+          { type: 'output', text: `Welcome, ${ADMIN_USER}! Type "help" to see available commands.` }
+        ]);
+      } else {
+        setHistory(prev => [
+          ...prev,
+          { type: 'command', text: '********' }, // Mask the password in history
+          { type: 'output', text: 'Authentication failed. Please enter a different username:' }
+        ]);
+      }
+      setInputValue('');
+      return;
+    }
+
+    const fullPrompt = `${terminalEnv.environment} ${terminalEnv.user}@${terminalEnv.machine} ${currentPath.join('/')} %`;
+    setHistory(prev => [...prev, { type: 'command', text: `${fullPrompt} ${command}` }]);
     setCommandHistory(prev => [...prev, command]);
     setHistoryIndex(-1);
 
-    const cmd = command.trim().toLowerCase();
+    const [cmd, ...args] = command.trim().split(' ');
+    const cmdLower = cmd.toLowerCase();
     
-    if (cmd === '') {
+    if (cmdLower === '') {
       return;
-    } else if (cmd === 'help') {
+    } else if (cmdLower === 'help') {
       setHistory(prev => [...prev, { 
         type: 'output', 
-        text: `Available commands:\n- portfolio themes\n- about\n- projects\n- social\n- clear\n` 
+        text: `Available commands:\n- cd <directory> - Change directory\n- ls - List directory contents\n- cat <file> - Display file contents\n- pwd - Print working directory\n- clear - Clear terminal\n- message <text> - Leave a message for Vineet\n- messages - View messages (admin only)\n- login - Admin authentication\n- logout - End admin session\n- portfolio themes - Show available themes\n- about - About me\n- projects - My projects\n- social - Social links` 
       }]);
-    } else if (cmd === 'about') {
+    } else if (cmdLower === 'login') {
+      const password = args[0];
+      if (!password) {
+        setHistory(prev => [...prev, { type: 'output', text: 'Usage: login <password>' }]);
+        return;
+      }
+      
+      if (password === ADMIN_PASSWORD) {
+        setTerminalEnv(prev => ({
+          ...prev,
+          user: ADMIN_USER,
+        }));
+        setHistory(prev => [...prev, { type: 'output', text: 'Successfully logged in as admin.' }]);
+      } else {
+        setHistory(prev => [...prev, { type: 'output', text: 'Authentication failed: Incorrect password.' }]);
+      }
+    } else if (cmdLower === 'logout') {
+      if (terminalEnv.user === ADMIN_USER) {
+        const systemInfo = getSystemInfo();
+        setTerminalEnv(prev => ({
+          ...prev,
+          user: systemInfo.username || '',
+        }));
+        setHistory(prev => [...prev, { type: 'output', text: 'Successfully logged out from admin session.' }]);
+      } else {
+        setHistory(prev => [...prev, { type: 'output', text: 'You are not logged in as admin.' }]);
+      }
+    } else if (cmdLower === 'message') {
+      const messageText = args.join(' ').trim();
+      if (!messageText) {
+        setHistory(prev => [...prev, { type: 'output', text: 'Please provide a message to save' }]);
+        return;
+      }
+
+      const timestamp = new Date().toISOString();
+      const messageId = `message_${timestamp}`;
+      const messageContent = `From: ${terminalEnv.user}@${terminalEnv.machine}\nDate: ${new Date().toLocaleString()}\nMessage: ${messageText}`;
+      
+      // Save message to fileSystem
+      fileSystem['~'].contents.messages.contents[messageId] = {
+        type: 'file',
+        content: messageContent
+      };
+
+      // Persist messages to localStorage
+      localStorage.setItem('terminal_messages', JSON.stringify(fileSystem['~'].contents.messages.contents));
+
       setHistory(prev => [...prev, { 
         type: 'output', 
-        text: `Hi, I'm Vineet!\n\nI'm an AI Engineer specializing in web and AI solutions.\n\nWith years of experience in development, I'm passionate about creating intuitive and efficient digital experiences.` 
+        text: 'Message sent successfully! Note: Only Vineet can view the messages, but your message has been saved.' 
       }]);
-    } else if (cmd === 'projects') {
-      setHistory(prev => [...prev, { 
-        type: 'output', 
-        text: `My Projects:\n\n1. WebEase - A platform for students to collaborate and find paid projects.\n   Tech: MERN Stack\n   Link: github.com/vineet/project1\n\n2. AI-Powered Quality Control - Automating defect detection in manufacturing.\n   Tech: Python, TensorFlow\n   Link: github.com/vineet/project2` 
-      }]);
-    } else if (cmd === 'social') {
-      setHistory(prev => [...prev, { 
-        type: 'output', 
-        text: `Connect with me:\n\n- GitHub: github.com/vineet\n- LinkedIn: linkedin.com/in/vineet\n- Twitter: twitter.com/vineet\n- Email: vineet@example.com` 
-      }]);
-    } else if (cmd === 'portfolio themes') {
-      setHistory(prev => [...prev, { 
-        type: 'output', 
-        text: `Available themes: minecraft` 
-      }]);
-    } else if (cmd === 'clear') {
+    } else if (cmdLower === 'messages') {
+      if (terminalEnv.user === ADMIN_USER) {
+        // Load messages from localStorage to ensure we have the latest
+        const savedMessages = localStorage.getItem('terminal_messages');
+        if (savedMessages) {
+          fileSystem['~'].contents.messages.contents = JSON.parse(savedMessages);
+        }
+        
+        const messages = Object.values(fileSystem['~'].contents.messages.contents);
+        if (messages.length === 0) {
+          setHistory(prev => [...prev, { type: 'output', text: 'No messages yet.' }]);
+        } else {
+          const messagesList = messages.map(msg => msg.content).join('\n\n---\n\n');
+          setHistory(prev => [...prev, { type: 'output', text: 'Messages:\n\n' + messagesList }]);
+        }
+      } else {
+        setHistory(prev => [...prev, { 
+          type: 'output', 
+          text: 'Permission denied: Only Vineet has access to view messages. Use "login" command to authenticate as admin.' 
+        }]);
+      }
+    } else if (cmdLower === 'cd') {
+      const target = args[0];
+      if (!target) {
+        setHistory(prev => [...prev, { type: 'output', text: 'Please specify a directory' }]);
+        return;
+      }
+      
+      const current = getCurrentDir();
+      if (target === '..') {
+        if (currentPath.length > 1) {
+          setCurrentPath(prev => prev.slice(0, -1));
+          setHistory(prev => [...prev, { type: 'output', text: '' }]);
+        }
+      } else if (current.contents[target]?.type === 'dir') {
+        setCurrentPath(prev => [...prev, target]);
+        setHistory(prev => [...prev, { type: 'output', text: '' }]);
+      } else {
+        setHistory(prev => [...prev, { type: 'output', text: `cd: no such directory: ${target}` }]);
+      }
+    } else if (cmdLower === 'ls') {
+      const current = getCurrentDir();
+      const contents = Object.keys(current.contents);
+      setHistory(prev => [...prev, { type: 'output', text: contents.join('  ') }]);
+    } else if (cmdLower === 'cat') {
+      const target = args[0];
+      if (!target) {
+        setHistory(prev => [...prev, { type: 'output', text: 'Please specify a file' }]);
+        return;
+      }
+      
+      const current = getCurrentDir();
+      if (current.contents[target]?.type === 'file') {
+        setHistory(prev => [...prev, { type: 'output', text: current.contents[target].content }]);
+      } else {
+        setHistory(prev => [...prev, { type: 'output', text: `cat: no such file: ${target}` }]);
+      }
+    } else if (cmdLower === 'pwd') {
+      setHistory(prev => [...prev, { type: 'output', text: currentPath.join('/') }]);
+    } else if (cmdLower === 'clear') {
       setHistory([]);
+    } else if (cmdLower === 'about') {
+      setHistory(prev => [...prev, { type: 'output', text: fileSystem['~'].contents.about.content }]);
+    } else if (cmdLower === 'projects') {
+      setHistory(prev => [...prev, { type: 'output', text: 'Available projects:\n\n' + 
+        Object.entries(fileSystem['~'].contents.projects.contents)
+          .map(([name, project]) => `${name}:\n${project.content}`)
+          .join('\n\n')
+      }]);
+    } else if (cmdLower === 'social') {
+      setHistory(prev => [...prev, { type: 'output', text: fileSystem['~'].contents.social.content }]);
+    } else if (cmdLower === 'portfolio' && args[0] === 'themes') {
+      setHistory(prev => [...prev, { 
+        type: 'output', 
+        text: 'Available themes:\n' + 
+          Object.keys(fileSystem['~'].contents.themes.contents).join('\n')
+      }]);
     } else {
       setHistory(prev => [...prev, { 
         type: 'output', 
@@ -107,7 +339,9 @@ const Terminal = () => {
           <div className={styles.terminalButton} style={{ backgroundColor: '#FFBD2E' }}></div>
           <div className={styles.terminalButton} style={{ backgroundColor: '#27C93F' }}></div>
         </div>
-        <div className={styles.terminalTitle}>terminal/portfolio@vineet</div>
+        <div className={styles.terminalTitle}>
+          {isInitializing ? 'Welcome' : `terminal/portfolio@${terminalEnv.user}`}
+        </div>
       </div>
       
       <div className={styles.terminalBody}>
@@ -121,12 +355,14 @@ const Terminal = () => {
         ))}
         
         <TerminalPrompt 
-          path={currentPath}
+          path={currentPath.join('/')}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onSubmit={() => handleCommand(inputValue)}
           onKeyDown={handleKeyDown}
           inputRef={inputRef}
+          env={terminalEnv}
+          isInitializing={isInitializing}
         />
       </div>
     </div>
