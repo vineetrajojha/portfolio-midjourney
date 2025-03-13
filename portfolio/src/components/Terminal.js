@@ -3,13 +3,20 @@ import { useState, useEffect, useRef } from 'react';
 import TerminalPrompt from './TerminalPrompt';
 import TerminalOutput from './TerminalOutput';
 import TerminalLoader from './TerminalLoader';
+import ThemeToggle from './ThemeToggle';
 import styles from './Terminal.module.css';
 import { getSystemInfo } from '../utils/systemInfo';
 
 const Terminal = () => {
   const [loading, setLoading] = useState(true);
+  const [theme, setTheme] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('terminal_theme') || 'dark';
+    }
+    return 'dark';
+  });
   const [history, setHistory] = useState([
-    { type: 'output', text: 'Welcome to my cres terminal portfolio v1.0' },
+    { type: 'output', text: 'cres terminal portfolio v1.0' },
     { type: 'output', text: 'Please enter your name to continue:' }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -51,6 +58,32 @@ const Terminal = () => {
       setIsInitializing(false);
     }
   }, []);
+
+  // Add theme effect
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const root = document.documentElement;
+    localStorage.setItem('terminal_theme', theme);
+
+    if (theme === 'system') {
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      root.classList.toggle('dark', prefersDark);
+    } else {
+      root.classList.toggle('dark', theme === 'dark');
+    }
+
+    // Listen for system theme changes
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = (e) => {
+      if (theme === 'system') {
+        root.classList.toggle('dark', e.matches);
+      }
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [theme]);
 
   // File system structure
   const fileSystem = {
@@ -340,7 +373,7 @@ const Terminal = () => {
 
   return (
     <div 
-      className={styles.terminal} 
+      className={`${styles.terminal} ${theme === 'light' ? styles.light : ''}`}
       onClick={() => inputRef.current?.focus()}
       ref={terminalRef}
     >
@@ -382,6 +415,7 @@ const Terminal = () => {
           </>
         )}
       </div>
+      <ThemeToggle theme={theme} setTheme={setTheme} />
     </div>
   );
 };
