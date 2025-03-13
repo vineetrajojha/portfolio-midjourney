@@ -3,7 +3,7 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'terminal/portfolio@cres',
-  description: 'Interactive terminal portfolio',
+  description: 'cres terminal portfolio v1.0',
 };
 
 export default function RootLayout({

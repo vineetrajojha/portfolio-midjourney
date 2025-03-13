@@ -9,7 +9,7 @@ import { getSystemInfo } from '../utils/systemInfo';
 const Terminal = () => {
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState([
-    { type: 'output', text: 'Welcome to my interactive portfolio!' },
+    { type: 'output', text: 'Welcome to my cres terminal portfolio v1.0' },
     { type: 'output', text: 'Please enter your name to continue:' }
   ]);
   const [inputValue, setInputValue] = useState('');
@@ -36,7 +36,7 @@ const Terminal = () => {
     setTimeout(() => {
       setLoading(false);
       setHistory([
-        { type: 'output', text: 'Welcome to my interactive portfolio!' },
+        { type: 'output', text: 'Welcome to my cres terminal portfolio v1.0' },
         { type: 'output', text: 'Please enter your name to continue:' }
       ]);
     }, 4000); // Show loader for 4 seconds
