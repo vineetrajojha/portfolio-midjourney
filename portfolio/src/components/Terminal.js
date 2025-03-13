@@ -43,7 +43,7 @@ const Terminal = () => {
     setTimeout(() => {
       setLoading(false);
       setHistory([
-        { type: 'output', text: 'Welcome to my cres terminal portfolio v1.0' },
+        { type: 'output', text: 'cres terminal portfolio v1.0' },
         { type: 'output', text: 'Please enter your name to continue:' }
       ]);
     }, 4000); // Show loader for 4 seconds
