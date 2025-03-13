@@ -2,10 +2,12 @@
 import { useState, useEffect, useRef } from 'react';
 import TerminalPrompt from './TerminalPrompt';
 import TerminalOutput from './TerminalOutput';
+import TerminalLoader from './TerminalLoader';
 import styles from './Terminal.module.css';
 import { getSystemInfo } from '../utils/systemInfo';
 
 const Terminal = () => {
+  const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState([
     { type: 'output', text: 'Welcome to my interactive portfolio!' },
     { type: 'output', text: 'Please enter your name to continue:' }
@@ -30,6 +32,15 @@ const Terminal = () => {
   const ADMIN_PASSWORD = 'Roshni/22@';
 
   useEffect(() => {
+    // Simulate loading time
+    setTimeout(() => {
+      setLoading(false);
+      setHistory([
+        { type: 'output', text: 'Welcome to my interactive portfolio!' },
+        { type: 'output', text: 'Please enter your name to continue:' }
+      ]);
+    }, 4000); // Show loader for 4 seconds
+
     const systemInfo = getSystemInfo();
     if (systemInfo.username) {
       setTerminalEnv(prev => ({
@@ -330,7 +341,7 @@ const Terminal = () => {
   return (
     <div 
       className={styles.terminal} 
-      onClick={() => inputRef.current.focus()}
+      onClick={() => inputRef.current?.focus()}
       ref={terminalRef}
     >
       <div className={styles.terminalHeader}>
@@ -345,25 +356,31 @@ const Terminal = () => {
       </div>
       
       <div className={styles.terminalBody}>
-        {history.map((item, i) => (
-          <div key={i}>
-            {item.type === 'command' 
-              ? <div className={styles.terminalCommand}>{item.text}</div> 
-              : <TerminalOutput text={item.text} />
-            }
-          </div>
-        ))}
-        
-        <TerminalPrompt 
-          path={currentPath.join('/')}
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onSubmit={() => handleCommand(inputValue)}
-          onKeyDown={handleKeyDown}
-          inputRef={inputRef}
-          env={terminalEnv}
-          isInitializing={isInitializing}
-        />
+        {loading ? (
+          <TerminalLoader />
+        ) : (
+          <>
+            {history.map((item, i) => (
+              <div key={i}>
+                {item.type === 'command' 
+                  ? <div className={styles.terminalCommand}>{item.text}</div> 
+                  : <TerminalOutput text={item.text} />
+                }
+              </div>
+            ))}
+            
+            <TerminalPrompt 
+              path={currentPath.join('/')}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onSubmit={() => handleCommand(inputValue)}
+              onKeyDown={handleKeyDown}
+              inputRef={inputRef}
+              env={terminalEnv}
+              isInitializing={isInitializing}
+            />
+          </>
+        )}
       </div>
     </div>
   );
